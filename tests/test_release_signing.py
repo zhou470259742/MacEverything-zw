@@ -68,7 +68,12 @@ class ReleaseSigningTests(unittest.TestCase):
             '"file[0-9]+\\\\.txt") ? 0 : 1; }', [archive])
         self.sign()
         verification = self.verify(platform.machine())
-        self.assertEqual(verification.returncode, 0, verification.stderr)
+        if verification.returncode != 0:
+            binary = subprocess.run(
+                ["file", "-b", str(self.binary)], capture_output=True, text=True).stdout.strip()
+            self.fail(
+                f"verify failed: machine={platform.machine()} "
+                f"kernel={os.uname().machine} file={binary}; {verification.stderr}")
         relocated = self.root / "Another Location" / self.app.name
         relocated.parent.mkdir()
         shutil.move(self.app, relocated)
